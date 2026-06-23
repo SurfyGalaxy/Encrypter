@@ -322,6 +322,7 @@ for i in range(0, 60, 4):  # because there's 15 of them for no good reason
 # , ['01001111', '00010000', '10010101', '01011101'],
 #  ['00101101', '01010110', '01010000', '11011001']],
 #  [['00101010', '01101100', '10010000', '11001110'],
+# :3
 #  ['01101100', '10000000', '01101111', '00111011'], 
 # ['00100000', '01101000', '00011010', '10000011'], [
 # '00110111', '11100010', '10111101', '00101111']], [
@@ -369,7 +370,11 @@ while padding != 0:
     death.append(binary_number)
     padding -= 1 # this thing is still inefficient
 
-print(death)
+# ['01000001', '01110100', '01110100', '01100001', '01100011', '01101011', '00100000',
+#  '01100001', '01110100', '00100000', '01100100', '01100001', '01110111', '01101110',
+#  '00100001', '00100001', '00010000', '00010000', '00010000', '00010000', '00010000',
+#  '00010000', '00010000', '00010000', '00010000', '00010000', '00010000', '00010000',
+#  '00010000', '00010000', '00010000', '00010000']
 
 grid = []
 for i in range(0, len(death), 16):
@@ -380,4 +385,51 @@ for i in range(0, len(death), 16):
             row.append(death[i])
         grid.append(row)
 
-print(grid)
+# [['01000001', '01100011', '01110100', '01110111'], ['01110100', '01101011', '00100000', '01101110'],
+#  ['01110100', '00100000', '01100100', '00100001'], ['01100001', '01100001', '01100001', '00100001'],
+#  ['01000001', '01100011', '01110100', '01110111'], ['01110100', '01101011', '00100000', '01101110'],
+#  ['01110100', '00100000', '01100100', '00100001'], ['01100001', '01100001', '01100001', '00100001']]
+
+# the last part:tm:
+
+# SubBytes > ShiftRows > MixColumns > AddRoundKey
+
+next_thing = []
+    # Round 0, fight
+for r in range(4): # AddRoundKey ig 
+    state_row = death[r]
+    key_row = matricies[0][r] 
+        
+    c0 = f"{(int(state_row[0], 2) ^ int(key_row[0], 2)):08b}"
+    c1 = f"{(int(state_row[1], 2) ^ int(key_row[1], 2)):08b}"
+    c2 = f"{(int(state_row[2], 2) ^ int(key_row[2], 2)):08b}"
+    c3 = f"{(int(state_row[3], 2) ^ int(key_row[3], 2)):08b}"
+        
+    next_thing.append([c0, c1, c2, c3])
+
+new_thing = []
+
+for r in range(4):
+    row = next_thing[r]
+    
+    b0 = SBOX[int(row[0], 2)]
+    b1 = SBOX[int(row[1], 2)]
+    b2 = SBOX[int(row[2], 2)]
+    b3 = SBOX[int(row[3], 2)]
+    
+    c0 = f"{b0:08b}"
+    c1 = f"{b1:08b}"
+    c2 = f"{b2:08b}"
+    c3 = f"{b3:08b}"
+    
+    new_thing.append([c0, c1, c2, c3])
+
+    # Violently ripping apart data volume 2? i think?
+shifted_thing = [
+    new_thing[0],                        
+    new_thing[1][1:] + new_thing[1][:1],  
+    new_thing[2][2:] + new_thing[2][:2],  
+    new_thing[3][3:] + new_thing[3][:3] 
+]
+
+print(shifted_thing)
