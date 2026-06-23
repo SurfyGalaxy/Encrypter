@@ -6,13 +6,9 @@ b_private = 15#int(input("Secret b? "))
 a_public = (g ** a_private) % p
 b_public = (g ** b_private) % p
 
-print(f"A's public key: {a_public}")
-print(f"B's public key: {b_public}")
-
 a_common = (b_public ** a_private) % p
 b_common = (a_public ** b_private) % p
 
-print(f"Shared key: {a_common}, {b_common}")
 
 # sigma0 bc funcs go here ig
 def sigma0(x):
@@ -34,7 +30,6 @@ def sigma1(x):
 bits = f"{a_common:032b}" # 00000000000000000000000000000010
 original_length = len(bits) # 32
 original_length = f"{original_length:064b}" # 0000000000000000000000000000000000000000000000000000000000100000
-print(f"Binary representation: {bits}")
 
 bits = bits + '1' # 000000000000000000000000000000101
 length = len(bits) # 33
@@ -189,6 +184,12 @@ SBOX = [
 RCON = [
     0x00, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1B, 0x36
 ]
+def xtime(b):
+    shifted = (b << 1) & 0xFF
+    if b & 0x80:
+        return shifted ^ 0x1B
+    return shifted
+
 
 
 W = [0] * 60 # oh no not this guy again
@@ -348,8 +349,17 @@ for i in range(0, 60, 4):  # because there's 15 of them for no good reason
 # , ['10100011', '11011000', '00000011', '10100001']]]
 
 # Welp time to actually encrypt something ig :yay:
-plaintext = "Attack at dawn!!" # ze hello world of ts ig
-
+e == None
+while e == None:
+    e = input("Decrypt or Encrypt")
+    print(e)
+    if e == "encrypt":
+        plaintext = input("What's your plaintext? ")
+    elif e == "decrypt":
+        cyphertext = input("What's your encrypted code? ")
+    else:
+        print(f"{e} isn't encrypt or decrypt!")
+        e = None
 death = []
 for char in plaintext:
     death.append(f"{ord(char):08b}")
@@ -381,8 +391,8 @@ for i in range(0, len(death), 16):
     for row_offset in range(4):
         row = []
         # Loop from the row start index to the end, skipping by 4
-        for i in range(row_offset, 16, 4):
-            row.append(death[i])
+        for idx in range(i + row_offset, i + 16, 4):
+            row.append(death[idx])
         grid.append(row)
 
 # [['01000001', '01100011', '01110100', '01110111'], ['01110100', '01101011', '00100000', '01101110'],
@@ -393,90 +403,79 @@ for i in range(0, len(death), 16):
 # the last part:tm:
 
 # SubBytes > ShiftRows > MixColumns > AddRoundKey
+i_dont_want_to_keep_doing_this_but_i_want_to_go_to_crux = "" # it's true
 
-next_thing = []
-    # Round 0, fight
-for r in range(4): # AddRoundKey ig 
-    state_row = death[r]
-    key_row = matricies[0][r] 
-        
-    c0 = f"{(int(state_row[0], 2) ^ int(key_row[0], 2)):08b}"
-    c1 = f"{(int(state_row[1], 2) ^ int(key_row[1], 2)):08b}"
-    c2 = f"{(int(state_row[2], 2) ^ int(key_row[2], 2)):08b}"
-    c3 = f"{(int(state_row[3], 2) ^ int(key_row[3], 2)):08b}"
-        
-    next_thing.append([c0, c1, c2, c3])
-
-state = next_thing
-def xtime(b):
-    shifted = (b << 1) & 0xFF
-    return shifted ^ 0x1B if (b & 0x80) else shifted
-
-for round_thing in range(1, 15):
-    new_thing = []
-
-    for r in range(4):
-        row = state[r]
-        
-        b0 = SBOX[int(row[0], 2)]
-        b1 = SBOX[int(row[1], 2)]
-        b2 = SBOX[int(row[2], 2)]
-        b3 = SBOX[int(row[3], 2)]
-        
-        c0 = f"{b0:08b}"
-        c1 = f"{b1:08b}"
-        c2 = f"{b2:08b}"
-        c3 = f"{b3:08b}"
-        
-        new_thing.append([c0, c1, c2, c3])
-
-    # Violently ripping apart data volume 2? i think?
-    shifted_thing = [
-        new_thing[0],                        
-        new_thing[1][1:] + new_thing[1][:1],  
-        new_thing[2][2:] + new_thing[2][:2],  
-        new_thing[3][3:] + new_thing[3][:3] 
-    ]
-
-# I love how well documented AES is lol, i could NOT do this without the docs
-# Cheers US NSA
-
-# WTH IS GAYOLIS FIELDS
-
-#this is here bc im lazy :p
-
-    if round_thing < 14: # because AES is weird
-        mixed_thing = [[] for _ in range(4)] # let's get techy and keep it in rows
-        for col_offset in range(4):
-            s0 = int(shifted_thing[0][col_offset], 2)
-            s1 = int(shifted_thing[1][col_offset], 2)
-            s2 = int(shifted_thing[2][col_offset], 2)
-            s3 = int(shifted_thing[3][col_offset], 2)
-
-            new_s0 = xtime(s0) ^ (xtime(s1) ^ s1) ^ s2 ^ s3
-            new_s1 = s0 ^ xtime(s1) ^ (xtime(s2) ^ s2) ^ s3
-            new_s2 = s0 ^ s1 ^ xtime(s2) ^ (xtime(s3) ^ s3) 
-            new_s3 = (xtime(s0) ^ s0) ^ s1 ^ s2 ^ xtime(s3)
-
-            mixed_thing[0].append(f"{new_s0:08b}")
-            mixed_thing[1].append(f"{new_s1:08b}")
-            mixed_thing[2].append(f"{new_s2:08b}")
-            mixed_thing[3].append(f"{new_s3:08b}")
-
-    else:
-        mixed_thing = shifted_thing
-
-    next_thing = []
-    # Round 1, exrapolate this casual
-    for r in range(4): # AddRoundKey ig pt 2
-        state_row = mixed_thing[r]
-        key_row = matricies[round_thing][r] 
+for block_index in range(0, len(grid), 4):
+    current_death = grid[block_index : block_index + 4]
+    
+    round_0_mix = []
+    for r in range(4): 
+        state_row = current_death[r]
+        key_row = matricies[0][r] 
             
         c0 = f"{(int(state_row[0], 2) ^ int(key_row[0], 2)):08b}"
         c1 = f"{(int(state_row[1], 2) ^ int(key_row[1], 2)):08b}"
         c2 = f"{(int(state_row[2], 2) ^ int(key_row[2], 2)):08b}"
         c3 = f"{(int(state_row[3], 2) ^ int(key_row[3], 2)):08b}"
-            
-        next_thing.append([c0, c1, c2, c3])
-    state = next_thing
+        round_0_mix.append([c0, c1, c2, c3])
 
+    active_block_state = round_0_mix
+
+    for round_thing in range(1, 15):
+        new_thing = []
+        for r in range(4):
+            row = active_block_state[r]
+            
+            b0 = SBOX[int(row[0], 2)]
+            b1 = SBOX[int(row[1], 2)]
+            b2 = SBOX[int(row[2], 2)]
+            b3 = SBOX[int(row[3], 2)]
+            new_thing.append([f"{b0:08b}", f"{b1:08b}", f"{b2:08b}", f"{b3:08b}"])
+
+        shifted_thing = [
+            new_thing[0][:],                        
+            new_thing[1][1:] + new_thing[1][:1],  
+            new_thing[2][2:] + new_thing[2][:2],  
+            new_thing[3][3:] + new_thing[3][:3] 
+        ]
+
+        if round_thing < 14: 
+            mixed_thing = [[], [], [], []] 
+            for col_offset in range(4):
+                s0 = int(shifted_thing[0][col_offset], 2)
+                s1 = int(shifted_thing[1][col_offset], 2)
+                s2 = int(shifted_thing[2][col_offset], 2)
+                s3 = int(shifted_thing[3][col_offset], 2)
+
+                new_s0 = xtime(s0) ^ (xtime(s1) ^ s1) ^ s2 ^ s3
+                new_s1 = s0 ^ xtime(s1) ^ (xtime(s2) ^ s2) ^ s3
+                new_s2 = s0 ^ s1 ^ xtime(s2) ^ (xtime(s3) ^ s3) 
+                new_s3 = (xtime(s0) ^ s0) ^ s1 ^ s2 ^ xtime(s3)
+
+                mixed_thing[0].append(f"{new_s0:08b}")
+                mixed_thing[1].append(f"{new_s1:08b}")
+                mixed_thing[2].append(f"{new_s2:08b}")
+                mixed_thing[3].append(f"{new_s3:08b}")
+        else:
+            mixed_thing = shifted_thing
+
+        round_complete_mix = []
+        for r in range(4): 
+            state_row = mixed_thing[r]
+            key_row = matricies[round_thing][r] 
+                
+            c0 = f"{(int(state_row[0], 2) ^ int(key_row[0], 2)):08b}"
+            c1 = f"{(int(state_row[1], 2) ^ int(key_row[1], 2)):08b}"
+            c2 = f"{(int(state_row[2], 2) ^ int(key_row[2], 2)):08b}"
+            c3 = f"{(int(state_row[3], 2) ^ int(key_row[3], 2)):08b}"
+            round_complete_mix.append([c0, c1, c2, c3])
+            
+        active_block_state = round_complete_mix
+
+    for col in range(4):
+        for row in range(4):
+            binary_byte = active_block_state[row][col]
+            i_dont_want_to_keep_doing_this_but_i_want_to_go_to_crux += f"{int(binary_byte, 2):02x}"
+
+print("--- FINAL AES-256 CIPHERTEXT STRING ---")
+print(i_dont_want_to_keep_doing_this_but_i_want_to_go_to_crux)
