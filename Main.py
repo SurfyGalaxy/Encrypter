@@ -270,3 +270,23 @@ for i in range(8, 60):
 
 # Wait
 # WHAT DO YOU MEAN IT NEEDS TO BE A MATRIX
+matricies = []
+
+for i in range(0, 60, 4):  # because there's 15 of them for no good reason
+    w0 = W[i]
+    w1 = W[i+1]
+    w2 = W[i+2]
+    w3 = W[i+3]
+
+    w0_b0, w0_b1, w0_b2, w0_b3 = w0[0:8], w0[8:16], w0[16:24], w0[24:32]
+    w1_b0, w1_b1, w1_b2, w1_b3 = w1[0:8], w1[8:16], w1[16:24], w1[24:32]
+    w2_b0, w2_b1, w2_b2, w2_b3 = w2[0:8], w2[8:16], w2[16:24], w2[24:32]
+    w3_b0, w3_b1, w3_b2, w3_b3 = w3[0:8], w3[8:16], w3[16:24], w3[24:32]
+    
+    matricies.append([
+[w0_b0, w1_b0, w2_b0, w3_b0],
+[w0_b1, w1_b1, w2_b1, w3_b1],
+[w0_b2, w1_b2, w2_b2, w3_b2],
+[w0_b3, w1_b3, w2_b3, w3_b3]
+])
+print(matricies)
