@@ -384,11 +384,11 @@ answered = False
 while answered == False:
     e = input("Decrypt or Encrypt? ")
     if e == "encrypt":
-        plaintext = input("What's your plaintext? ")
+        plaintext = "no" #encinput("What's your plaintext? ")
         answered = True
         encryption = True
     elif e == "decrypt":
-        plaintext = input("What's your encrypted code? ")
+        plaintext = "3e4bbe586da8ea0e9af111fa6e8a3400"#input("What's your encrypted code? ")
         answered = True
         encryption = False
     else:
@@ -440,12 +440,14 @@ for i in range(0, len(death), 16):
 
 # the last part:tm:
 
-# SubBytes > ShiftRows > MixColumns > AddRoundKey
+# SubBytes > ShiftRows > MixColumns > AddRoundKey# SubBytes > ShiftRows > MixColumns > AddRoundKey
 i_dont_want_to_keep_doing_this_but_i_want_to_go_to_crux = "" # it's true
 
 for block_index in range(0, len(grid), 4):
     current_death = grid[block_index : block_index + 4]
-    if encryption == True: # Enjoy double reading the code...    sorry reviewer
+    
+    if encryption == True:
+        # Initial AddRoundKey (Round 0)
         round_0_mix = []
         for r in range(4): 
             state_row = current_death[r]
@@ -456,63 +458,73 @@ for block_index in range(0, len(grid), 4):
             c2 = f"{(int(state_row[2], 2) ^ int(key_row[2], 2)):08b}"
             c3 = f"{(int(state_row[3], 2) ^ int(key_row[3], 2)):08b}"
             round_0_mix.append([c0, c1, c2, c3])
-
+        
         active_block_state = round_0_mix
-
+        
         for round_thing in range(1, 15):
+            # SubBytes
             new_thing = []
             for r in range(4):
                 row = active_block_state[r]
-                
                 b0 = SBOX[int(row[0], 2)]
                 b1 = SBOX[int(row[1], 2)]
                 b2 = SBOX[int(row[2], 2)]
                 b3 = SBOX[int(row[3], 2)]
                 new_thing.append([f"{b0:08b}", f"{b1:08b}", f"{b2:08b}", f"{b3:08b}"])
-                
+            
+            # ShiftRows
             shifted_thing = [
-                new_thing[0][:],                        
-                new_thing[1][1:] + new_thing[1][:1],  
-                new_thing[2][2:] + new_thing[2][:2],  
-                new_thing[3][3:] + new_thing[3][:3] 
+                new_thing[0][:],
+                new_thing[1][1:] + new_thing[1][:1],
+                new_thing[2][2:] + new_thing[2][:2],
+                new_thing[3][3:] + new_thing[3][:3]
             ]
-
-            if round_thing < 14: 
-                mixed_thing = [[], [], [], []] 
+            
+            if round_thing < 14:
+                mixed_thing = [[], [], [], []]
                 for col_offset in range(4):
                     s0 = int(shifted_thing[0][col_offset], 2)
                     s1 = int(shifted_thing[1][col_offset], 2)
                     s2 = int(shifted_thing[2][col_offset], 2)
                     s3 = int(shifted_thing[3][col_offset], 2)
-
+                    
                     new_s0 = xtime(s0) ^ (xtime(s1) ^ s1) ^ s2 ^ s3
                     new_s1 = s0 ^ xtime(s1) ^ (xtime(s2) ^ s2) ^ s3
-                    new_s2 = s0 ^ s1 ^ xtime(s2) ^ (xtime(s3) ^ s3) 
+                    new_s2 = s0 ^ s1 ^ xtime(s2) ^ (xtime(s3) ^ s3)
                     new_s3 = (xtime(s0) ^ s0) ^ s1 ^ s2 ^ xtime(s3)
-
+                    
                     mixed_thing[0].append(f"{new_s0:08b}")
                     mixed_thing[1].append(f"{new_s1:08b}")
                     mixed_thing[2].append(f"{new_s2:08b}")
                     mixed_thing[3].append(f"{new_s3:08b}")
+                round_mix = []
+                for r in range(4):
+                    state_row = mixed_thing[r]
+                    key_row = matricies[round_thing][r]
+                    c0 = f"{(int(state_row[0], 2) ^ int(key_row[0], 2)):08b}"
+                    c1 = f"{(int(state_row[1], 2) ^ int(key_row[1], 2)):08b}"
+                    c2 = f"{(int(state_row[2], 2) ^ int(key_row[2], 2)):08b}"
+                    c3 = f"{(int(state_row[3], 2) ^ int(key_row[3], 2)):08b}"
+                    round_mix.append([c0, c1, c2, c3])
+                active_block_state = round_mix
             else:
-                mixed_thing = shifted_thing
-
-            round_complete_mix = []
-            for r in range(4): 
-                state_row = mixed_thing[r]
-                key_row = matricies[round_thing][r] 
-                    
-                c0 = f"{(int(state_row[0], 2) ^ int(key_row[0], 2)):08b}"
-                c1 = f"{(int(state_row[1], 2) ^ int(key_row[1], 2)):08b}"
-                c2 = f"{(int(state_row[2], 2) ^ int(key_row[2], 2)):08b}"
-                c3 = f"{(int(state_row[3], 2) ^ int(key_row[3], 2)):08b}"
-                round_complete_mix.append([c0, c1, c2, c3])
+                round_mix = []
+                for r in range(4):
+                    state_row = shifted_thing[r]
+                    key_row = matricies[round_thing][r]
+                    c0 = f"{(int(state_row[0], 2) ^ int(key_row[0], 2)):08b}"
+                    c1 = f"{(int(state_row[1], 2) ^ int(key_row[1], 2)):08b}"
+                    c2 = f"{(int(state_row[2], 2) ^ int(key_row[2], 2)):08b}"
+                    c3 = f"{(int(state_row[3], 2) ^ int(key_row[3], 2)):08b}"
+                    round_mix.append([c0, c1, c2, c3])
+                active_block_state = round_mix    
     else:
-
+        print("=== DECRYPTING ===")
+        print(f"Ciphertext bytes: {current_death}")
         round_0_mix = []
         for r in range(4): 
             state_row = current_death[r]
-            key_row = matricies[14][r] 
+            key_row = matricies[14][r]
                 
             c0 = f"{(int(state_row[0], 2) ^ int(key_row[0], 2)):08b}"
             c1 = f"{(int(state_row[1], 2) ^ int(key_row[1], 2)):08b}"
@@ -521,59 +533,72 @@ for block_index in range(0, len(grid), 4):
             round_0_mix.append([c0, c1, c2, c3])
 
         active_block_state = round_0_mix
-        for round_thing in range(1, 15):
-            shifted_thing = [
-            active_block_state[0][:],                        
-            active_block_state[1][-1:] + active_block_state[1][:-1],  
-            active_block_state[2][-2:] + active_block_state[2][:-2],  
-            active_block_state[3][-3:] + active_block_state[3][:-3] 
-        ]
-
-        new_thing = []
-        for r in range(4):
-            row = shifted_thing[r]
+        print(f"After AddRoundKey 14: {active_block_state}")
+        
+        for round_thing in range(14, 0, -1):
+            print(f"\n=== Round {round_thing} ===")
+            print(f"Before InvShiftRows: {active_block_state}")
             
-            b0 = INV_SBOX[int(row[0], 2)]
-            b1 = INV_SBOX[int(row[1], 2)]
-            b2 = INV_SBOX[int(row[2], 2)]
-            b3 = INV_SBOX[int(row[3], 2)]
-            new_thing.append([f"{b0:08b}", f"{b1:08b}", f"{b2:08b}", f"{b3:08b}"])
+            r0 = active_block_state[0]
+            r1 = active_block_state[1]
+            r2 = active_block_state[2]
+            r3 = active_block_state[3]
+            
+            shifted_thing = [
+                [r0[0], r0[1], r0[2], r0[3]],  
+                [r1[3], r1[0], r1[1], r1[2]],  
+                [r2[2], r2[3], r2[0], r2[1]],  
+                [r3[1], r3[2], r3[3], r3[0]]   
+            ]
+            print(f"After InvShiftRows: {shifted_thing}")
 
-        round_complete_mix = []
-        for r in range(4): 
-            state_row = new_thing[r]
-            key_row = matricies[round_thing - 1][r]
-                
-            c0 = f"{(int(state_row[0], 2) ^ int(key_row[0], 2)):08b}"
-            c1 = f"{(int(state_row[1], 2) ^ int(key_row[1], 2)):08b}"
-            c2 = f"{(int(state_row[2], 2) ^ int(key_row[2], 2)):08b}"
-            c3 = f"{(int(state_row[3], 2) ^ int(key_row[3], 2)):08b}"
-            round_complete_mix.append([c0, c1, c2, c3])
+            new_thing = []
+            for r in range(4):
+                row = shifted_thing[r]
+                b0 = INV_SBOX[int(row[0], 2)]
+                b1 = INV_SBOX[int(row[1], 2)]
+                b2 = INV_SBOX[int(row[2], 2)]
+                b3 = INV_SBOX[int(row[3], 2)]
+                new_thing.append([f"{b0:08b}", f"{b1:08b}", f"{b2:08b}", f"{b3:08b}"])
+            print(f"After InvSubBytes: {new_thing}")
 
-        if round_thing > 1: # FIX: Bound tracks > 1 in reverse flow
-            mixed_thing = [[], [], [], []] 
-            for col_offset in range(4):
-                s0 = int(round_complete_mix[0][col_offset], 2)
-                s1 = int(round_complete_mix[1][col_offset], 2)
-                s2 = int(round_complete_mix[2][col_offset], 2)
-                s3 = int(round_complete_mix[3][col_offset], 2)
+            round_complete_mix = []
+            key_index = round_thing - 1
+            for r in range(4): 
+                state_row = new_thing[r]
+                key_row = matricies[key_index][r] 
+                    
+                c0 = f"{(int(state_row[0], 2) ^ int(key_row[0], 2)):08b}"
+                c1 = f"{(int(state_row[1], 2) ^ int(key_row[1], 2)):08b}"
+                c2 = f"{(int(state_row[2], 2) ^ int(key_row[2], 2)):08b}"
+                c3 = f"{(int(state_row[3], 2) ^ int(key_row[3], 2)):08b}"
+                round_complete_mix.append([c0, c1, c2, c3])
+            print(f"After AddRoundKey {key_index}: {round_complete_mix}")
 
-                # FIX: The 4 Inverse MixColumns equations using your mul9-mul14 macros!
-                new_s0 = mul14(s0) ^ mul11(s1) ^ mul13(s2) ^ mul9(s3)
-                new_s1 = mul9(s0)  ^ mul14(s1) ^ mul11(s2) ^ mul13(s3)
-                new_s2 = mul13(s0) ^ mul9(s1)  ^ mul14(s2) ^ mul11(s3)
-                new_s3 = mul11(s0) ^ mul13(s1) ^ mul9(s2)  ^ mul14(s3)
+            if round_thing > 1: 
+                mixed_thing = [[], [], [], []] 
+                for col_offset in range(4):
+                    s0 = int(round_complete_mix[0][col_offset], 2)
+                    s1 = int(round_complete_mix[1][col_offset], 2)
+                    s2 = int(round_complete_mix[2][col_offset], 2)
+                    s3 = int(round_complete_mix[3][col_offset], 2)
 
-                mixed_thing[0].append(f"{new_s0:08b}")
-                mixed_thing[1].append(f"{new_s1:08b}")
-                mixed_thing[2].append(f"{new_s2:08b}")
-                mixed_thing[3].append(f"{new_s3:08b}")
-                
-            active_block_state = mixed_thing
-        else: 
-            active_block_state = round_complete_mix
-                
-    active_block_state = round_complete_mix
+                    new_s0 = mul14(s0) ^ mul11(s1) ^ mul13(s2) ^ mul9(s3)
+                    new_s1 = mul9(s0)  ^ mul14(s1) ^ mul11(s2) ^ mul13(s3)
+                    new_s2 = mul13(s0) ^ mul9(s1)  ^ mul14(s2) ^ mul11(s3)
+                    new_s3 = mul11(s0) ^ mul13(s1) ^ mul9(s2)  ^ mul14(s3)
+
+                    mixed_thing[0].append(f"{new_s0:08b}")
+                    mixed_thing[1].append(f"{new_s1:08b}")
+                    mixed_thing[2].append(f"{new_s2:08b}")
+                    mixed_thing[3].append(f"{new_s3:08b}")
+                    
+                active_block_state = mixed_thing
+                print(f"After InvMixColumns: {active_block_state}")
+            else: 
+                print(f"Final state before final XOR: {round_complete_mix}")
+                active_block_state = round_complete_mix
+                print(f"Final state: {active_block_state}")
 
     for col in range(4):
         for row in range(4):
