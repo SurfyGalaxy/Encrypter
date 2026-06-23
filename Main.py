@@ -407,29 +407,76 @@ for r in range(4): # AddRoundKey ig
         
     next_thing.append([c0, c1, c2, c3])
 
-new_thing = []
+state = next_thing
+def xtime(b):
+    shifted = (b << 1) & 0xFF
+    return shifted ^ 0x1B if (b & 0x80) else shifted
 
-for r in range(4):
-    row = next_thing[r]
-    
-    b0 = SBOX[int(row[0], 2)]
-    b1 = SBOX[int(row[1], 2)]
-    b2 = SBOX[int(row[2], 2)]
-    b3 = SBOX[int(row[3], 2)]
-    
-    c0 = f"{b0:08b}"
-    c1 = f"{b1:08b}"
-    c2 = f"{b2:08b}"
-    c3 = f"{b3:08b}"
-    
-    new_thing.append([c0, c1, c2, c3])
+for round_thing in range(1, 15):
+    new_thing = []
+
+    for r in range(4):
+        row = state[r]
+        
+        b0 = SBOX[int(row[0], 2)]
+        b1 = SBOX[int(row[1], 2)]
+        b2 = SBOX[int(row[2], 2)]
+        b3 = SBOX[int(row[3], 2)]
+        
+        c0 = f"{b0:08b}"
+        c1 = f"{b1:08b}"
+        c2 = f"{b2:08b}"
+        c3 = f"{b3:08b}"
+        
+        new_thing.append([c0, c1, c2, c3])
 
     # Violently ripping apart data volume 2? i think?
-shifted_thing = [
-    new_thing[0],                        
-    new_thing[1][1:] + new_thing[1][:1],  
-    new_thing[2][2:] + new_thing[2][:2],  
-    new_thing[3][3:] + new_thing[3][:3] 
-]
+    shifted_thing = [
+        new_thing[0],                        
+        new_thing[1][1:] + new_thing[1][:1],  
+        new_thing[2][2:] + new_thing[2][:2],  
+        new_thing[3][3:] + new_thing[3][:3] 
+    ]
 
-print(shifted_thing)
+# I love how well documented AES is lol, i could NOT do this without the docs
+# Cheers US NSA
+
+# WTH IS GAYOLIS FIELDS
+
+#this is here bc im lazy :p
+
+    if round_thing < 14: # because AES is weird
+        mixed_thing = [[] for _ in range(4)] # let's get techy and keep it in rows
+        for col_offset in range(4):
+            s0 = int(shifted_thing[0][col_offset], 2)
+            s1 = int(shifted_thing[1][col_offset], 2)
+            s2 = int(shifted_thing[2][col_offset], 2)
+            s3 = int(shifted_thing[3][col_offset], 2)
+
+            new_s0 = xtime(s0) ^ (xtime(s1) ^ s1) ^ s2 ^ s3
+            new_s1 = s0 ^ xtime(s1) ^ (xtime(s2) ^ s2) ^ s3
+            new_s2 = s0 ^ s1 ^ xtime(s2) ^ (xtime(s3) ^ s3) 
+            new_s3 = (xtime(s0) ^ s0) ^ s1 ^ s2 ^ xtime(s3)
+
+            mixed_thing[0].append(f"{new_s0:08b}")
+            mixed_thing[1].append(f"{new_s1:08b}")
+            mixed_thing[2].append(f"{new_s2:08b}")
+            mixed_thing[3].append(f"{new_s3:08b}")
+
+    else:
+        mixed_thing = shifted_thing
+
+    next_thing = []
+    # Round 1, exrapolate this casual
+    for r in range(4): # AddRoundKey ig pt 2
+        state_row = mixed_thing[r]
+        key_row = matricies[round_thing][r] 
+            
+        c0 = f"{(int(state_row[0], 2) ^ int(key_row[0], 2)):08b}"
+        c1 = f"{(int(state_row[1], 2) ^ int(key_row[1], 2)):08b}"
+        c2 = f"{(int(state_row[2], 2) ^ int(key_row[2], 2)):08b}"
+        c3 = f"{(int(state_row[3], 2) ^ int(key_row[3], 2)):08b}"
+            
+        next_thing.append([c0, c1, c2, c3])
+    state = next_thing
+
