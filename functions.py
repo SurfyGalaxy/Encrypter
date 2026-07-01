@@ -504,7 +504,7 @@ def aes256_decrypt(ciphertext, matrices):
             decrypted_bytes = decrypted_bytes[:-padding_len]
         return decrypted_bytes.decode('utf-8')
     except UnicodeDecodeError:
-        return "Either that wasn't valid ciphertext or you used the wrong key"
+        return False
 
 
 def aes256(sha256, text, encrypt):
@@ -514,3 +514,5 @@ def aes256(sha256, text, encrypt):
         result = aes256_encrypt(text, matrices)
     else:
         result = aes256_decrypt(text, matrices)
+    
+    return result

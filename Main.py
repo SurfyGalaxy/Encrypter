@@ -22,7 +22,8 @@ autofills = {
     "public" : 10,  
     "shared" : 6,
     "sha256" : "b253668f6b59f1ff28522831931e4d3c5a3de533965af22e961735437c0172cb",
-    "text" : "Attack at dawn!"
+    "text" : "Attack at dawn!",
+    "cipher" : "a4cefb9e24c08289d7d9f897cef1cfa8"
 }
 
 def main_menu():
@@ -32,7 +33,7 @@ def main_menu():
     tk.Button(main, text="Calculate the private key", command=lambda: calculate_dhke(0)).pack()
     tk.Button(main, text="Convert a private key to SHA-256", command=lambda: sha_256(0)).pack()
     tk.Button(main, text="Encrypt plaintext", command=lambda: encrypt(0)).pack()
-    tk.Button(main, text="Decrypt ciphertext", command=decrypt).pack()
+    tk.Button(main, text="Decrypt ciphertext", command=lambda: decrypt(0)).pack()
 
 def build_dhke(offset):
     if offset == 0:
@@ -196,15 +197,37 @@ def cipher(sha, text, encrypt):
     global autofills
     sha = sha.get()
     text = text.get()
+    clear_window()
 
     result = func.aes256(sha, text, encrypt)
 
+    if result is None:
+        result = "Invalid cyphertext or SHA-256 key"
+
     if encrypt == True:
         autofills["text"] = text
-    else:
-        autofills["cipher"] = text
+        tk.Label(main, text="Your AES-256 encrypted message is:").pack()
+        output = tk.Text(main, width=70, height=8)
+        output.pack()
 
-def decrypt():
+        output.delete("1.0", "end")
+        output.insert("1.0", result)
+        output.config(state="disabled")
+    else:
+        tk.Label(main, text="Your decrypted text is:").pack()
+        output = tk.Text(main, width=70, height=8)
+        output.pack()
+
+        output.delete("1.0", "end")
+        output.insert("1.0", result)
+        output.config(state="disabled")
+    
+    tk.Button(main, text="Add to clipboard", command=lambda: copy(result)).pack()
+    tk.Button(main, text="Back to main menu", command=main_menu).pack()
+    
+
+
+def decrypt(offset):
     if offset == 0:
         clear_window()
     
