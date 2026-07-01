@@ -1,4 +1,4 @@
-import utils
+import math
 
 SBOX = [
     0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5, 0x30, 0x01, 0x67, 0x2b, 0xfe, 0xd7, 0xab, 0x76,
@@ -83,6 +83,20 @@ def mul14(b):
 # The gayolis field things are still scary
 
 
+def check_prime(var: int) -> bool:
+    if var <= 1:
+        return False
+    if var == 2:
+        return True
+    if var % 2 == 0:
+        return False
+    
+    max_int = int(math.isqrt(var))
+    for i in range(3, max_int + 1, 2):
+        if var % i == 0:
+            return False
+    
+    return True
 
 # ==========================================================================================================================
 # ==========================================================================================================================
