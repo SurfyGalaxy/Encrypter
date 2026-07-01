@@ -5,59 +5,58 @@ def clear_window():
     for widget in main.winfo_children():
         widget.destroy()
 
+def copy(text):
+    main.clipboard_clear()
+    main.clipboard_append(text)
+    main.update()
+
 main = tk.Tk()
 main.title("Encryption")
 main.geometry("500x500")
 
 main_choice = tk.StringVar(value="DHKE")
+autofills = {
+    "prime" : 23,
+    "base" : 11,
+    "secret" : 6,
+    "public" : 10,  
+    "shared" : 6,
+}
 
 def main_menu():
-    tk.Label(main, text="What do you want to do?").pack()
-    tk.Radiobutton(main, text="Make a public key", variable=main_choice, value="DHKE public").pack()
-    tk.Radiobutton(main, text="Calculate the private key", variable=main_choice, value="DHKE private").pack()
-    tk.Radiobutton(main, text="Convert a private key to SHA-256", variable=main_choice, value="SHA-256").pack()
-    tk.Radiobutton(main, text="Encrypt plaintext", variable=main_choice, value="Encrypt").pack()
-    tk.Radiobutton(main, text="Decrypt ciphertext", variable=main_choice, value="Decrypt").pack()
-    tk.Button(main, text="Submit", command=main_menu_answer).pack()
-
-def main_menu_answer():
     clear_window()
-    selection = main_choice.get()
-    if selection == "DHKE public":
-        build_dhke(0, (23, 11, 5))
-    elif selection == "DHKE private":
-        calculate_dhke()
-    elif selection == "SHA-256":
-        sha_256()
-    elif selection == "Encrypt":
-        encrypt()
-    elif selection == "Decrypt":
-        decrypt()
-    else:
-        print("Something's gone wrong")
+    tk.Label(main, text="What do you want to do?").pack()
+    tk.Button(main, text="Make a public key", command=lambda: build_dhke(0)).pack()
+    tk.Button(main, text="Calculate the private key", command=lambda: calculate_dhke(0)).pack()
+    tk.Button(main, text="Convert a private key to SHA-256", command=lambda: sha_256(0)).pack()
+    tk.Button(main, text="Encrypt plaintext", command=encrypt).pack()
+    tk.Button(main, text="Decrypt ciphertext", command=decrypt).pack()
 
-def build_dhke(offset, default):
+def build_dhke(offset):
+    if offset == 0:
+        clear_window()
     tk.Label(main, text="Building a public key").grid(row=0 + offset, column=1)
     
     tk.Label(main, text="What shared prime did you choose?").grid(row=1 + offset, column=0)
     prime = tk.Entry(main)
-    prime.insert(0, default[0])
+    prime.insert(0, autofills["prime"])
     prime.grid(row=1 + offset, column=2)
     
     tk.Label(main, text="What shared base did you choose?").grid(row=2 + offset, column=0)
     base = tk.Entry(main)
-    base.insert(0, default[1])
+    base.insert(0, autofills["base"])
     base.grid(row=2 + offset, column=2)
 
     tk.Label(main, text="What's your secret key?").grid(row=3 + offset,   column=0)
     secret = tk.Entry(main)
-    secret.insert(0, default[2])
+    secret.insert(0, autofills["secret"])
     secret.grid(row=3 + offset, column=2)
 
     tk.Button(main, text="Submit", command=lambda: build_dhke_answer(prime, base, secret)).grid(row=4 + offset, column=1)
-
+    tk.Button(main, text="Back to main menu", command=main_menu).grid(row=5 + offset, column=1)
 
 def build_dhke_answer(prime, base, secret):
+    global autofills
     prime = prime.get()
     base = base.get()
     secret = secret.get()
@@ -69,19 +68,88 @@ def build_dhke_answer(prime, base, secret):
         secret = int(secret)
     except ValueError:
         tk.Label(main, text="Invalid integers").grid(row=0, column=1)
-        build_dhke(1, (23, 11, 5))
+        build_dhke(1, (23, 11, 6))
+        return
     
     if func.check_prime(prime) == False:
         tk.Label(main, text=f"{prime} isn't prime!").grid(row=0, column=1)
         build_dhke(1, (23, str(base), str(secret)))
-        
+        return
+    
+    key = func.make_dhke(prime, base, secret)
+
+    autofills.update({
+        "prime" : prime,
+        "base" : base,
+        "secret" : secret
+    })
+    tk.Label(main, text=f"Your public key is {key}").pack()
+    tk.Button(main, text="Add to clipboard", command=lambda: copy(str(key))).pack()
+    tk.Button(main, text="Back to main menu", command=main_menu).pack()
 
 
-def calculate_dhke():
-    pass
+def calculate_dhke(offset):
+    if offset == 0:
+        clear_window()
+    
+    tk.Label(main, text="Calculating the shared private key").grid(row=0 + offset, column=1)
+    
+    tk.Label(main, text="What shared prime did you choose?").grid(row=1 + offset, column=0)
+    prime = tk.Entry(main)
+    prime.insert(0, autofills["prime"])
+    prime.grid(row=1 + offset, column=2)
+    
+    tk.Label(main, text="What was your secret?").grid(row=2 + offset, column=0)
+    secret = tk.Entry(main)
+    secret.insert(0, autofills["secret"])
+    secret.grid(row=2 + offset, column=2)
 
-def sha_256():
-    pass
+    tk.Label(main, text="What was the other person's public key?").grid(row=3 + offset,   column=0)
+    public = tk.Entry(main)
+    public.insert(0, autofills["public"])
+    public.grid(row=3 + offset, column=2)
+
+    tk.Button(main, text="Submit", command=lambda: calculate_dhke_answer(prime, secret, public)).grid(row=4 + offset, column=1)
+    tk.Button(main, text="Back to main menu", command=main_menu).grid(row=5 + offset, column= 1)
+
+def calculate_dhke_answer(prime, secret, public):
+    global autofills
+    prime = prime.get()
+    secret = secret.get()
+    public = public.get()
+    clear_window()
+
+    try:
+        prime = int(prime)
+        secret = int(secret)
+        public = int(public)
+    except ValueError:
+        tk.Label(main, text="Invalid integers").grid(row=0, column=1)
+        build_dhke(1, (23, 11, 6))
+        return
+    
+    if func.check_prime(prime) == False:
+        tk.Label(main, text=f"{prime} isn't prime!").grid(row=0, column=1)
+        build_dhke(1, (23, str(base), str(secret)))
+        return
+    
+    key = func.calculate_dhke(prime, secret, public)
+    autofills["shared"] = key
+    tk.Label(main, text=f"Your shared private key is {key}").pack()
+    tk.Button(main, text="Add to clipboard", command=lambda: copy(str(key))).pack()
+    tk.Button(main, text="Back to main menu", command=main_menu).pack()
+
+
+def sha_256(offset):
+    tk.Label(main, text="Hash your shared secret through SHA-256").grid(row=0 + offset, column=1)
+
+    tk.Label(main, text="The shared key to hash").grid(row=1 + offset, column=0)
+    shared = tk.Entry(main)
+    shared.insert(0, autofills["shared"])
+    shared.grid(row=1 + offset, column=2)
+    
+    tk.Button(main, text="Submit", command=lambda: sha_256_answer(shared))
+    tk.Button(main,)
 
 def encrypt():
     pass

@@ -102,14 +102,11 @@ def check_prime(var: int) -> bool:
 # ==========================================================================================================================
 # ==========================================================================================================================
 
-def make_dhke() -> int:
-    p = int(input("What prime number did you both agree on? "))
-    g = int(input("What integer did you both agree on for the base? "))
-    a_private = int(input("Pick any secret integer, and keep it to yourself."))
-    print(f"Your public key is: {pow(g, a_private, p)}, share this with the other person")
-    b_public = int(input("What was the other person's public key? "))
-    a_common = pow(b_public, a_private, p)
-    return a_common
+def make_dhke(prime: int, base:int, private:int) -> int: # Makes a public key
+    return pow(base, private, prime)
+
+def calculate_dhke(prime: int, private: int, public: int) -> int: # Makes a shared private
+    return pow(public, private, prime)
 
 def pad_sha256(key: int) -> str:
     bits = f"{key:032b}" # 00000000000000000000000000000010
