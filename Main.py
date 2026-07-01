@@ -21,6 +21,8 @@ autofills = {
     "secret" : 6,
     "public" : 10,  
     "shared" : 6,
+    "sha256" : "b253668f6b59f1ff28522831931e4d3c5a3de533965af22e961735437c0172cb",
+    "text" : "Attack at dawn!"
 }
 
 def main_menu():
@@ -29,7 +31,7 @@ def main_menu():
     tk.Button(main, text="Make a public key", command=lambda: build_dhke(0)).pack()
     tk.Button(main, text="Calculate the private key", command=lambda: calculate_dhke(0)).pack()
     tk.Button(main, text="Convert a private key to SHA-256", command=lambda: sha_256(0)).pack()
-    tk.Button(main, text="Encrypt plaintext", command=encrypt).pack()
+    tk.Button(main, text="Encrypt plaintext", command=lambda: encrypt(0)).pack()
     tk.Button(main, text="Decrypt ciphertext", command=decrypt).pack()
 
 def build_dhke(offset):
@@ -141,6 +143,8 @@ def calculate_dhke_answer(prime, secret, public):
 
 
 def sha_256(offset):
+    if offset == 0:
+        clear_window()
     tk.Label(main, text="Hash your shared secret through SHA-256").grid(row=0 + offset, column=1)
 
     tk.Label(main, text="The shared key to hash").grid(row=1 + offset, column=0)
@@ -163,21 +167,62 @@ def sha_256_answer(shared):
         sha_256(1)
     
     key = func.sha256(shared)
+    autofills["sha256"] = key
+    tk.Label(main, text=f"Your SHA-256 hash is:").pack()
+    tk.Label(main, text=key).pack()
+    tk.Button(main, text="Add to clipboard", command=lambda: copy(str(key))).pack()
+    tk.Button(main, text="Back to main menu", command=main_menu).pack()
 
-def encrypt():
-    pass
+def encrypt(offset):
+    if offset == 0:
+        clear_window()
+    
+    tk.Label(main, text="Encrypt using your SHA-256 Hash").grid(row=0 + offset, column=1)
+
+    tk.Label(main, text="The SHA-256 Hash to use").grid(row=1 + offset, column=0)
+    sha = tk.Entry(main)
+    sha.insert(0, autofills["sha256"])
+    sha.grid(row=1 + offset, column=2)
+
+    tk.Label(main, text="The plaintext to encrypt").grid(row=2 + offset, column=0)
+    text = tk.Entry(main)
+    text.insert(0, autofills["text"])
+    text.grid(row=2 + offset, column=2)
+
+    tk.Button(main, text="Submit", command=lambda: cipher(sha, text, True)).grid(row=3 + offset, column=1)
+    tk.Button(main, text="Back to main menu", command=main_menu).grid(row=4 + offset, column=1)
+
+def cipher(sha, text, encrypt):
+    global autofills
+    sha = sha.get()
+    text = text.get()
+
+    result = func.aes256(sha, text, encrypt)
+
+    if encrypt == True:
+        autofills["text"] = text
+    else:
+        autofills["cipher"] = text
 
 def decrypt():
-    pass
-#dhke = func.make_dhke()
-#print(f"DHKE: {dhke}")
-#bits = func.pad_sha256(dhke)
-#W_list = func.make_words_sha256(bits)
-#sha256 = func.sha256(W_list)
-#print(f"SHA256: {sha256}")
-#matrices = func.make_matrix(sha256)
-#AES = func.aes256(matrices)
-#print(f"AES: {AES}")
+    if offset == 0:
+        clear_window()
+    
+    tk.Label(main, text="Decrypt using your SHA-256 Hash").grid(row=0 + offset, column=1)
+
+    tk.Label(main, text="The SHA-256 Hash to use").grid(row=1 + offset, column=0)
+    sha = tk.Entry(main)
+    sha.insert(0, autofills["sha256"])
+    sha.grid(row=1 + offset, column=2)
+
+    tk.Label(main, text="The ciphertext to decrypt").grid(row=2 + offset, column=0)
+    text = tk.Entry(main)
+    text.insert(0, autofills["cipher"])
+    text.grid(row=2 + offset, column=2)
+
+    tk.Button(main, text="Submit", command=lambda: cipher(sha, text, False)).grid(row=3 + offset, column=1)
+    tk.Button(main, text="Back to main menu", command=main_menu).grid(row=4 + offset, column=1)
+
 main_menu()
 
 main.mainloop()
