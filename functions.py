@@ -108,6 +108,11 @@ def make_dhke(prime: int, base:int, private:int) -> int: # Makes a public key
 def calculate_dhke(prime: int, private: int, public: int) -> int: # Makes a shared private
     return pow(public, private, prime)
 
+def sha256(key: int) -> str:
+    temp = pad_sha256(key)
+    temp = make_words_sha256(temp)
+    return sha256_calculate(temp)
+
 def pad_sha256(key: int) -> str:
     bits = f"{key:032b}" # 00000000000000000000000000000010
     original_length = len(bits) # 32
@@ -172,7 +177,7 @@ def make_words_sha256(bits: str) -> list:
     #  112315124, 2186246912, 3844969496, 2038881117, 687767609, 833828520, 1636763283, 3393557549, 2590202533, < y u stick out
     # 1161748692, 2314927931, 3674480832, 1926178234, 2270863185, 3853778291, 1526002070, 2628575069]
 
-def sha256(W_ints: list) -> str:
+def sha256_calculate(W_ints: list) -> str:
     # Var definitions bc im too lazy to scroll up
     h0 = 0x6a09e667
     h1 = 0xbb67ae85

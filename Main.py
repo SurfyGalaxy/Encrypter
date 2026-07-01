@@ -148,8 +148,21 @@ def sha_256(offset):
     shared.insert(0, autofills["shared"])
     shared.grid(row=1 + offset, column=2)
     
-    tk.Button(main, text="Submit", command=lambda: sha_256_answer(shared))
-    tk.Button(main,)
+    tk.Button(main, text="Submit", command=lambda: sha_256_answer(shared)).grid(row=2 + offset, column=1)
+    tk.Button(main, text="Back to main menu", command=main_menu).grid(row=3 + offset, column=1)
+
+def sha_256_answer(shared):
+    global autofills
+    shared = shared.get()
+    clear_window()
+
+    try:
+        shared = int(shared)
+    except ValueError:
+        tk.Label(main, "Invalid integer").grid(row=0, column=1)
+        sha_256(1)
+    
+    key = func.sha256(shared)
 
 def encrypt():
     pass
